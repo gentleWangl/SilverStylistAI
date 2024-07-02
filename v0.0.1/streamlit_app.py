@@ -13,7 +13,7 @@ from langchain_community.chat_models import ChatZhipuAI
 # streamlit run streamlit_app.py
 #export OPENAI_API_KEY=
 #os.environ["OPENAI_API_BASE"] = 'https://api.chatgptid.net/v1'
-zhipuai_api_key = os.environ['ZHIPUAI_API_KEY']
+# zhipuai_api_key = os.environ['ZHIPUAI_API_KEY']
 os.environ["https_proxy"] = "http://127.0.0.1:7890"
 
 def generate_response(input_text, api_key):
@@ -80,8 +80,7 @@ def get_qa_chain(question:str,api_key:str):
 # Streamlit 应用程序界面
 def main():
     st.title('🦜🔗 银饰推荐小助手')
-    api_key = zhipuai_api_key 
-
+    api_key =  st.sidebar.text_input('Zhipu API Key', type='password')
     # 添加一个选择按钮来选择不同的模型
     #selected_method = st.sidebar.selectbox("选择模式", ["qa_chain", "chat_qa_chain", "None"])
     # selected_method = st.radio(
