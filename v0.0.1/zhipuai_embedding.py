@@ -15,6 +15,9 @@ class ZhipuAIEmbeddings(BaseModel, Embeddings):
     client: Any
     """`zhipuai.ZhipuAI"""
 
+    api_key: str
+    """API Key for ZhipuAI"""
+
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
         """
@@ -28,7 +31,7 @@ class ZhipuAIEmbeddings(BaseModel, Embeddings):
             values (Dict): 包含配置信息的字典。如果环境中有zhipuai库，则将返回实例化的ZhipuAI类；否则将报错 'ModuleNotFoundError: No module named 'zhipuai''.
         """
         from zhipuai import ZhipuAI
-        values["client"] = ZhipuAI()
+        values["client"] = ZhipuAI(api_key=values["api_key"])
         return values
     
     def embed_query(self, text: str) -> List[float]:
@@ -41,6 +44,7 @@ class ZhipuAIEmbeddings(BaseModel, Embeddings):
         Return:
             embeddings (List[float]): 输入文本的 embedding，一个浮点数值列表.
         """
+
         embeddings = self.client.embeddings.create(
             model="embedding-2",
             input=text

@@ -24,38 +24,52 @@ def generate_response(input_text, api_key):
     #st.info(output)
     return output
 
-def get_vectordb():
+def get_vectordb(api_key:str):
     # 定义 Embeddings
-    embedding = ZhipuAIEmbeddings()
+    embedding = ZhipuAIEmbeddings(api_key=api_key)
     # 向量数据库持久化路径
     persist_directory = './data_base/chroma'
     # 加载数据库
     vectordb = Chroma(
         persist_directory=persist_directory,  # 允许我们将persist_directory目录保存到磁盘上
-        embedding_function=embedding
+        embedding_function=embedding,
     )
     return vectordb
 
 #带有历史记录的问答链
 def get_chat_qa_chain(question:str,api_key:str):
-    vectordb = get_vectordb()
+    vectordb = get_vectordb(api_key)
+
     llm = ChatZhipuAI(model="glm-4",temperature=0.7, api_key=api_key)
     memory = ConversationBufferMemory(
         memory_key="chat_history",  
         return_messages=True  # 将以消息列表的形式返回聊天记录，而不是单个字符串
     )
+    template = """你是一个杰出的优秀银饰客服，称呼其他人为姐姐或者小哥哥，根据，礼貌热情地进行推荐和回答。
+    使用以下上下文作为你可能推荐的饰品，放在<context></context> XML标签内。
+    <context>
+    {context}
+    </context>
+    当回答用户时：
+    你应该根据给出的内容进行回答,但不能用原来的context中的内容进行回答，主要目的是推荐<context></context>中的银饰产品，给出关于该饰品有价值的回答，尽量促成用户购买。
+    回答的时候要带上，姐姐或者小哥哥的尊称。
+    问题: {question}
+    """
+    QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context","question"],
+                                 template=template)
     retriever=vectordb.as_retriever()
-    qa = ConversationalRetrievalChain.from_llm(
+    qa = RetrievalQA.from_chain_type(
         llm,
         retriever=retriever,
-        memory=memory
+        memory=memory,
+        chain_type_kwargs={"prompt":QA_CHAIN_PROMPT}
     )
-    result = qa({"question": question})
-    return result['answer']
+    result = qa({"query": question})
+    return result['result']
 
 #不带历史记录的问答链
 def get_qa_chain(question:str,api_key:str):
-    vectordb = get_vectordb()
+    vectordb = get_vectordb(api_key)
     llm = ChatZhipuAI(model="glm-4",temperature=0.7, api_key=api_key)
     template = """你是一个杰出的优秀银饰客服，称呼其他人为姐姐或者小哥哥，根据，礼貌热情地进行推荐和回答。
     使用以下上下文作为你可能推荐的饰品，放在<context></context> XML标签内。
@@ -80,7 +94,8 @@ def get_qa_chain(question:str,api_key:str):
 # Streamlit 应用程序界面
 def main():
     st.title('🦜🔗 银饰推荐小助手')
-    api_key =  st.sidebar.text_input('Zhipu API Key', type='password')
+    api_key = st.sidebar.text_input('Zhipu API Key', type='password')
+    print(api_key)
     # 添加一个选择按钮来选择不同的模型
     #selected_method = st.sidebar.selectbox("选择模式", ["qa_chain", "chat_qa_chain", "None"])
     # selected_method = st.radio(
