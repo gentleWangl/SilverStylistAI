@@ -15,7 +15,7 @@ from langchain_community.chat_models import ChatZhipuAI
 #os.environ["OPENAI_API_BASE"] = 'https://api.chatgptid.net/v1'
 # zhipuai_api_key = os.environ['ZHIPUAI_API_KEY']
 os.environ["https_proxy"] = "http://127.0.0.1:7890"
-
+expample = '这是一个例子'
 def generate_response(input_text, api_key):
     llm = ChatZhipuAI(model="glm-4",temperature=0.7, api_key=api_key)
     output = llm.invoke(input_text)
